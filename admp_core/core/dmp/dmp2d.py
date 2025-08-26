@@ -72,3 +72,29 @@ def rollout_2d(T: int, dt: float, c: np.ndarray, h: np.ndarray,
         y[t+1, 0] = y[t, 0] + dt * (v[t+1, 0] / tau)
         y[t+1, 1] = y[t, 1] + dt * (v[t+1, 1] / tau)
     return y
+# Added 250826
+# For E2E DMP system CVAE method network
+# calculation of forcing term of DMP
+
+def inverse_dmp_2d(y, dt, alpha=25.0, beta=None):
+    """
+    For given y(t) , calculate f(t)
+    """
+    if beta is None:
+        beta = alpha / 4.0
+
+    T = len(y)
+    tau = 1.0       # Standard time constant
+
+    # Velocity and accleration calculation (Numerical Differentiation)
+    dy      = np.gradient(y, dt, axis=0)
+    ddy     = np.gradient(dy, dt, axis=0)
+
+    # Start, Goal
+    y0, g = y[0], y[-1]
+
+    # For each time step, calculate forcing term
+    fx = tau * ddy[:, 0] - alpha * (beta * (g[0] - y[:, 0]) - dy[:, 0])
+    fy = tau * ddy[:, 1] - alpha * (beta * (g[1] - y[:, 1]) - dy[:, 1])
+
+    return fx, fy
